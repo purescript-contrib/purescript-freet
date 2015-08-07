@@ -21,6 +21,14 @@ instance monadTransFreeT :: (Functor f) => MonadTrans (FreeT f)
 instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m)
 ```
 
+#### `freeT`
+
+``` purescript
+freeT :: forall f m a. (Unit -> m (Either a (f (FreeT f m a)))) -> FreeT f m a
+```
+
+Construct a computation of type `FreeT`.
+
 #### `resume`
 
 ``` purescript

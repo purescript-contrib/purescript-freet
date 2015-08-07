@@ -2,6 +2,7 @@
 
 module Control.Monad.Free.Trans
   ( FreeT()
+  , freeT
   , liftFreeT
   , hoistFreeT
   , interpret
@@ -32,6 +33,10 @@ bound m f = Bind (mkExists (Bound m f))
 
 -- | The free monad transformer for the functor `f`.
 data FreeT f m a = FreeT (Unit -> m (Either a (f (FreeT f m a)))) | Bind (Exists (Bound f m a))
+
+-- | Construct a computation of type `FreeT`.
+freeT :: forall f m a. (Unit -> m (Either a (f (FreeT f m a)))) -> FreeT f m a
+freeT = FreeT
 
 -- | Unpack `FreeT`, exposing the first step of the computation.
 resume :: forall f m a. (Functor f, MonadRec m) => FreeT f m a -> m (Either a (f (FreeT f m a)))
