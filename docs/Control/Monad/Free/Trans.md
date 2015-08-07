@@ -21,6 +21,14 @@ instance monadTransFreeT :: (Functor f) => MonadTrans (FreeT f)
 instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m)
 ```
 
+#### `resume`
+
+``` purescript
+resume :: forall f m a. (Functor f, MonadRec m) => FreeT f m a -> m (Either a (f (FreeT f m a)))
+```
+
+Unpack `FreeT`, exposing the first step of the computation.
+
 #### `liftFreeT`
 
 ``` purescript
