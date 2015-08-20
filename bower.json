@@ -1,6 +1,5 @@
 {
   "name": "purescript-freet",
-  "version": "1.0.0",
   "moduleType": [
     "node"
   ],
