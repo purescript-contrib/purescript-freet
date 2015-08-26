@@ -2,6 +2,7 @@ module Test.Main where
 
 import Prelude
 
+import Control.Apply
 import Control.Monad.Eff
 import Control.Monad.Eff.Class
 import Control.Monad.Eff.Console
@@ -39,11 +40,12 @@ runTeletype = runFreeT interp
     return (k s)
     
   readLine :: forall eff. Aff (console :: CONSOLE | eff) String
-  readLine = makeAff \_ s -> void do
+  readLine = makeAff \_ k -> void do
     interface <- createInterface noCompletion
     setPrompt "> " 2 interface
-    setLineHandler interface s
-    prompt interface
+    setLineHandler interface \s -> close interface *> k s
+    line <- prompt interface
+    return line
 
 main = runAff print return $ runTeletype $ forever do
   s <- readLine
