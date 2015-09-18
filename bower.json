@@ -9,15 +9,15 @@
     "bower_components",
     "output"
   ],
-  "repository": {                                              
-    "type": "git",                                             
+  "repository": {
+    "type": "git",
     "url": "git://github.com/paf31/purescript-freet.git"
-  },                                                           
+  },
   "dependencies": {
     "purescript-console": "^0.1.0",
     "purescript-control": "~0.3.0",
     "purescript-tailrec": "~0.3.0",
-    "purescript-transformers": "~0.7.1",
+    "purescript-transformers": "~0.8.1",
     "purescript-exists": "~0.2.0"
   }
 }

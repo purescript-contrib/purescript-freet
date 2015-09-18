@@ -86,15 +86,15 @@ liftFreeT :: forall f m a. (Functor f, Monad m) => f a -> FreeT f m a
 liftFreeT fa = FreeT \_ -> return (Right (map pure fa))
 
 -- | Change the underlying `Monad` for a `FreeT` action.
-hoistFreeT :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> FreeT f m a -> FreeT f n a
+hoistFreeT :: forall f m n a. (Functor f, Functor n) => (forall b. m b -> n b) -> FreeT f m a -> FreeT f n a
 hoistFreeT = bimapFreeT id
 
 -- | Change the base functor `f` for a `FreeT` action.
-interpret :: forall f g m a. (Functor f, Functor m) => (forall a. f a -> g a) -> FreeT f m a -> FreeT g m a
+interpret :: forall f g m a. (Functor f, Functor m) => (forall b. f b -> g b) -> FreeT f m a -> FreeT g m a
 interpret nf = bimapFreeT nf id
 
 -- | Change the base functor `f` and the underlying `Monad` for a `FreeT` action.
-bimapFreeT :: forall f g m n a. (Functor f, Functor n) => (forall a. f a -> g a) -> (forall a. m a -> n a) -> FreeT f m a -> FreeT g n a
+bimapFreeT :: forall f g m n a. (Functor f, Functor n) => (forall b. f b -> g b) -> (forall b. m b -> n b) -> FreeT f m a -> FreeT g n a
 bimapFreeT nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapFreeT nf nm <<< a) (bimapFreeT nf nm <<< f)) e
 bimapFreeT nf nm (FreeT m) = FreeT \_ -> map (nf <<< map (bimapFreeT nf nm)) <$> nm (m unit)
 
