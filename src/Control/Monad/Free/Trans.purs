@@ -13,15 +13,13 @@ module Control.Monad.Free.Trans
 
 import Prelude
 
-import Data.Maybe
-import Data.Tuple
-import Data.Exists
-import Data.Either (Either(..), either)
+import Data.Exists (Exists(), mkExists, runExists)
+import Data.Either (Either(..))
 import Data.Bifunctor (bimap)
 
 import Control.Bind ((<=<))
-import Control.Monad.Trans (MonadTrans, lift)
 import Control.Monad.Rec.Class (MonadRec, tailRecM)
+import Control.Monad.Trans (MonadTrans)
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
 -- | evaluate later.
