@@ -2,13 +2,13 @@
 
 module Control.Monad.Free.Trans
   ( FreeT()
-  , freeT
-  , liftFreeT
-  , hoistFreeT
-  , interpret
-  , bimapFreeT
-  , resume
-  , runFreeT
+  -- , freeT
+  -- , liftFreeT
+  -- , hoistFreeT
+  -- , interpret
+  -- , bimapFreeT
+  -- , resume
+  -- , runFreeT
   ) where
 
 import Prelude
@@ -21,22 +21,36 @@ import Control.Bind ((<=<))
 import Control.Monad.Rec.Class (MonadRec, tailRecM)
 import Control.Monad.Trans (MonadTrans)
 
--- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
--- | evaluate later.
-data Bound f m b a = Bound (Unit -> FreeT f m a) (a -> FreeT f m b)
+data StacklessF f a next
+  = F (f a)
+  | Suspend (Unit -> next)
+  | Done a
 
--- | Capture a `bind` operation for the `FreeT` monad.
-bound :: forall f m a b. (Unit -> FreeT f m a) -> (a -> FreeT f m b) -> FreeT f m b
-bound m f = Bind (mkExists (Bound m f))
+newtype SuspT f m a = SuspT (m (StacklessF f a (SuspT f m a)))
+
+unSuspT :: forall f m a. SuspT f m a -> m (StacklessF f a (SuspT f m a))
+unSuspT (SuspT a) = a
+
+suspend :: forall f m a. (Applicative m) => (Unit -> SuspT f m a) -> SuspT f m a
+suspend thunk = SuspT $ return $ Suspend thunk
+
+done :: forall f m a. (Functor m) => m a -> SuspT f m a
+done m = SuspT $ Done <$> m
 
 -- | The free monad transformer for the functor `f`.
-data FreeT f m a = FreeT (Unit -> m (Either a (f (FreeT f m a)))) | Bind (Exists (Bound f m a))
+newtype FreeT f m a = FreeT (forall r. (a -> SuspT f m r) -> SuspT f m r)
+
+unFreeT :: forall f m a. FreeT f m a -> (forall r. (a -> SuspT f m r) -> SuspT f m r)
+unFreeT (FreeT a) = a
 
 -- | Construct a computation of type `FreeT`.
-freeT :: forall f m a. (Unit -> m (Either a (f (FreeT f m a)))) -> FreeT f m a
-freeT = FreeT
+{- TODO: freeT
+--freeT :: forall f m a. (Unit -> m (Either a (f (FreeT f m a)))) -> FreeT f m a
+--freeT = FreeT
+-}
 
 -- | Unpack `FreeT`, exposing the first step of the computation.
+{- TODO: resume
 resume :: forall f m a. (Functor f, MonadRec m) => FreeT f m a -> m (Either a (f (FreeT f m a)))
 resume = tailRecM go
   where
@@ -50,27 +64,29 @@ resume = tailRecM go
           Left a -> return (Left (f a))
           Right fc -> return (Right (Right (map (\h -> h >>= f) fc)))
       Bind e1 -> runExists (\(Bound m1 f1) -> return (Left (bind (m1 unit) (\z -> f1 z >>= f)))) e1) e
+--}
 
-instance functorFreeT :: (Functor f, Functor m) => Functor (FreeT f m) where
-  map f (FreeT m) = FreeT \_ -> map (bimap f (map (map f))) (m unit)
-  map f (Bind e) = runExists (\(Bound a k) -> bound a (map f <<< k)) e
+instance functorFreeT :: (Functor f, Applicative m) => Functor (FreeT f m) where
+  map f (FreeT ca) = FreeT (\k -> suspend (\_ -> ca (k <<< f)))
 
-instance applyFreeT :: (Functor f, Monad m) => Apply (FreeT f m) where
-  apply = ap
+instance applyFreeT :: (Functor f, Applicative m) => Apply (FreeT f m) where
+  apply (FreeT cf) (FreeT ca) = FreeT (\k -> suspend (\_ -> cf (\f -> suspend (\_ -> ca (k <<< f)))))
 
-instance applicativeFreeT :: (Functor f, Monad m) => Applicative (FreeT f m) where
-  pure a = FreeT \_ -> pure (Left a)
+instance applicativeFreeT :: (Functor f, Applicative m) => Applicative (FreeT f m) where
+  pure a = FreeT (\k -> suspend (\_ -> k a))
 
-instance bindFreeT :: (Functor f, Monad m) => Bind (FreeT f m) where
-  bind (Bind e) f = runExists (\(Bound a k) -> bound a (\x -> bound (\_ -> k x) f)) e
-  bind a f = bound (\_ -> a) f
+instance bindFreeT :: (Functor f, Applicative m) => Bind (FreeT f m) where
+  bind (FreeT ca) f = FreeT (\k -> suspend (\_ -> ca (\a -> (unFreeT $ f a) k)))
 
-instance monadFreeT :: (Functor f, Monad m) => Monad (FreeT f m)
+instance monadFreeT :: (Functor f, Applicative m) => Monad (FreeT f m)
 
 instance monadTransFreeT :: (Functor f) => MonadTrans (FreeT f) where
-  lift ma = FreeT \_ -> map Left ma
+  lift m = FreeT (\k -> SuspT $ do
+    a <- m
+    unSuspT $ k a
+  )
 
-instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m) where
+instance monadRecFreeT :: (Functor f, Applicative m) => MonadRec (FreeT f m) where
   tailRecM f = go
     where
     go s = do
@@ -79,6 +95,7 @@ instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m) where
         Left s1 -> go s1
         Right a -> return a
 
+{-
 -- | Lift an action from the functor `f` to a `FreeT` action.
 liftFreeT :: forall f m a. (Functor f, Monad m) => f a -> FreeT f m a
 liftFreeT fa = FreeT \_ -> return (Right (map pure fa))
@@ -105,3 +122,4 @@ runFreeT interp = tailRecM (go <=< resume)
   go (Right fc) = do
     c <- interp fc
     return (Left c)
+-}
