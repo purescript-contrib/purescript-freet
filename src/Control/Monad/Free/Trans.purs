@@ -22,7 +22,7 @@ import Control.Monad.Rec.Class (MonadRec, tailRecM)
 import Control.Monad.Trans (MonadTrans)
 
 data StacklessF f a next
-  = F (f a)
+  = F (f next)
   | Suspend (Unit -> next)
   | Done a
 
@@ -34,8 +34,8 @@ unSuspT (SuspT a) = a
 suspend :: forall f m a. (Applicative m) => (Unit -> SuspT f m a) -> SuspT f m a
 suspend thunk = SuspT $ return $ Suspend thunk
 
-done :: forall f m a. (Functor m) => m a -> SuspT f m a
-done m = SuspT $ Done <$> m
+done :: forall f m a. (Applicative m) => a -> SuspT f m a
+done a = SuspT $ Done $ pure m
 
 -- | The free monad transformer for the functor `f`.
 newtype FreeT f m a = FreeT (forall r. (a -> SuspT f m r) -> SuspT f m r)
@@ -66,27 +66,27 @@ resume = tailRecM go
       Bind e1 -> runExists (\(Bound m1 f1) -> return (Left (bind (m1 unit) (\z -> f1 z >>= f)))) e1) e
 --}
 
-instance functorFreeT :: (Functor f, Applicative m) => Functor (FreeT f m) where
+instance functorFreeT :: (Applicative m) => Functor (FreeT f m) where
   map f (FreeT ca) = FreeT (\k -> suspend (\_ -> ca (k <<< f)))
 
-instance applyFreeT :: (Functor f, Applicative m) => Apply (FreeT f m) where
+instance applyFreeT :: (Applicative m) => Apply (FreeT f m) where
   apply (FreeT cf) (FreeT ca) = FreeT (\k -> suspend (\_ -> cf (\f -> suspend (\_ -> ca (k <<< f)))))
 
-instance applicativeFreeT :: (Functor f, Applicative m) => Applicative (FreeT f m) where
+instance applicativeFreeT :: (Applicative m) => Applicative (FreeT f m) where
   pure a = FreeT (\k -> suspend (\_ -> k a))
 
-instance bindFreeT :: (Functor f, Applicative m) => Bind (FreeT f m) where
+instance bindFreeT :: (Applicative m) => Bind (FreeT f m) where
   bind (FreeT ca) f = FreeT (\k -> suspend (\_ -> ca (\a -> (unFreeT $ f a) k)))
 
-instance monadFreeT :: (Functor f, Applicative m) => Monad (FreeT f m)
+instance monadFreeT :: (Applicative m) => Monad (FreeT f m)
 
-instance monadTransFreeT :: (Functor f) => MonadTrans (FreeT f) where
+instance monadTransFreeT :: MonadTrans (FreeT f) where
   lift m = FreeT (\k -> SuspT $ do
     a <- m
     unSuspT $ k a
   )
 
-instance monadRecFreeT :: (Functor f, Applicative m) => MonadRec (FreeT f m) where
+instance monadRecFreeT :: (Applicative m) => MonadRec (FreeT f m) where
   tailRecM f = go
     where
     go s = do
@@ -122,4 +122,14 @@ runFreeT interp = tailRecM (go <=< resume)
   go (Right fc) = do
     c <- interp fc
     return (Left c)
+-}
+
+{- TODO: Finish this
+-- | Run a `FreeT` computation to completion.
+runFreeT :: forall f m a. (MonadRec m) => (forall b. f b -> m b) -> FreeT f m a -> m a
+runFreeT f (Free c) = (unSuspT $ c done) >>= tailRecM go
+  where
+    go :: StacklessF f a (SuspT f m a) -> m (Either (StacklessF f a (SuspT f m a)) a)
+    go (F fa) = do
+      f fa
 -}
