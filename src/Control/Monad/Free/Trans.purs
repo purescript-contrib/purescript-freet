@@ -8,12 +8,11 @@ module Control.Monad.Free.Trans
   -- , interpret
   -- , bimapFreeT
   -- , resume
-  -- , runFreeT
+  , runFreeT
   ) where
 
 import Prelude
 
-import Data.Exists (Exists(), mkExists, runExists)
 import Data.Either (Either(..))
 import Data.Bifunctor (bimap)
 
@@ -35,7 +34,7 @@ suspend :: forall f m a. (Applicative m) => (Unit -> SuspT f m a) -> SuspT f m a
 suspend thunk = SuspT $ return $ Suspend thunk
 
 done :: forall f m a. (Applicative m) => a -> SuspT f m a
-done a = SuspT $ Done $ pure m
+done a = SuspT $ Done <$> pure a
 
 -- | The free monad transformer for the functor `f`.
 newtype FreeT f m a = FreeT (forall r. (a -> SuspT f m r) -> SuspT f m r)
@@ -112,24 +111,13 @@ interpret nf = bimapFreeT nf id
 bimapFreeT :: forall f g m n a. (Functor f, Functor n) => (forall b. f b -> g b) -> (forall b. m b -> n b) -> FreeT f m a -> FreeT g n a
 bimapFreeT nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapFreeT nf nm <<< a) (bimapFreeT nf nm <<< f)) e
 bimapFreeT nf nm (FreeT m) = FreeT \_ -> map (nf <<< map (bimapFreeT nf nm)) <$> nm (m unit)
-
--- | Run a `FreeT` computation to completion.
-runFreeT :: forall f m a. (Functor f, MonadRec m) => (f (FreeT f m a) -> m (FreeT f m a)) -> FreeT f m a -> m a
-runFreeT interp = tailRecM (go <=< resume)
-  where
-  go :: Either a (f (FreeT f m a)) -> m (Either (FreeT f m a) a)
-  go (Left a) = return (Right a)
-  go (Right fc) = do
-    c <- interp fc
-    return (Left c)
 -}
 
-{- TODO: Finish this
 -- | Run a `FreeT` computation to completion.
 runFreeT :: forall f m a. (MonadRec m) => (forall b. f b -> m b) -> FreeT f m a -> m a
-runFreeT f (Free c) = (unSuspT $ c done) >>= tailRecM go
+runFreeT f (FreeT c) = (unSuspT $ c done) >>= tailRecM go
   where
     go :: StacklessF f a (SuspT f m a) -> m (Either (StacklessF f a (SuspT f m a)) a)
-    go (F fa) = do
-      f fa
--}
+    go (F fa) = (f fa) >>= ((Left <$> _) <<< unSuspT)
+    go (Suspend thunk) = Left <$> unSuspT (thunk unit)
+    go (Done a) = return $ Right a
