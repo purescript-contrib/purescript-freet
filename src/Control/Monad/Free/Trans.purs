@@ -20,14 +20,14 @@ import Control.Bind ((<=<))
 import Control.Monad.Rec.Class (MonadRec, tailRecM)
 import Control.Monad.Trans (MonadTrans)
 
-data StacklessF f a next
-  = F (f next)
-  | Suspend (Unit -> next)
+data StacklessF f m a
+  = F (f (FreeT f m a))
+  | Suspend (Unit -> SuspT f m a)
   | Done a
 
-newtype SuspT f m a = SuspT (m (StacklessF f a (SuspT f m a)))
+newtype SuspT f m a = SuspT (m (StacklessF f m a))
 
-unSuspT :: forall f m a. SuspT f m a -> m (StacklessF f a (SuspT f m a))
+unSuspT :: forall f m a. SuspT f m a -> m (StacklessF f m a)
 unSuspT (SuspT a) = a
 
 suspend :: forall f m a. (Applicative m) => (Unit -> SuspT f m a) -> SuspT f m a
@@ -114,10 +114,10 @@ bimapFreeT nf nm (FreeT m) = FreeT \_ -> map (nf <<< map (bimapFreeT nf nm)) <$>
 -}
 
 -- | Run a `FreeT` computation to completion.
-runFreeT :: forall f m a. (MonadRec m) => (forall b. f b -> m b) -> FreeT f m a -> m a
+runFreeT :: forall f m a. (MonadRec m) => (f (FreeT f m a) -> m (FreeT f m a)) -> FreeT f m a -> m a
 runFreeT f (FreeT c) = (unSuspT $ c done) >>= tailRecM go
   where
-    go :: StacklessF f a (SuspT f m a) -> m (Either (StacklessF f a (SuspT f m a)) a)
-    go (F fa) = (f fa) >>= ((Left <$> _) <<< unSuspT)
+    go :: StacklessF f m a -> m (Either (StacklessF f m a) a)
+    go (F fa) = (f fa) >>= (\(FreeT c2) -> Left <$> ((unSuspT $ c2 done) :: m (StacklessF f m a)))
     go (Suspend thunk) = Left <$> unSuspT (thunk unit)
     go (Done a) = return $ Right a
