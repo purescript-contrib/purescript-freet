@@ -7,7 +7,7 @@ module Control.Monad.Free.Trans
   -- , hoistFreeT
   -- , interpret
   -- , bimapFreeT
-  -- , resume
+  , resume
   , runFreeT
   ) where
 
@@ -61,6 +61,14 @@ freeT thunk = FreeT (\k -> SuspT $ do
       (\fa -> suspTBind (SuspT $ pure $ F fa) k)
       x
   )
+
+resume :: forall f m a. (Functor f, MonadRec m) => FreeT f m a -> m (Either a (f (FreeT f m a)))
+resume (FreeT c) = (unSuspT $ c done) >>= (tailRecM go)
+  where
+    go :: StacklessF f m a -> m (Either (StacklessF f m a) (Either a (f (FreeT f m a))))
+    go (F fa) = return $ Right $ Right fa
+    go (Suspend thunk) = Left <$> (unSuspT $ thunk unit)
+    go (Done a) = return $ Right $ Left a
 
 -- | Unpack `FreeT`, exposing the first step of the computation.
 {- TODO: resume
