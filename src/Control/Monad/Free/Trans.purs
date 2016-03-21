@@ -4,9 +4,9 @@ module Control.Monad.Free.Trans
   ( FreeT()
   , freeT
   , liftFreeT
-  -- , hoistFreeT
-  -- , interpret
-  -- , bimapFreeT
+  , hoistFreeT
+  , interpret
+  , bimapFreeT
   , resume
   , runFreeT
   ) where
@@ -14,9 +14,7 @@ module Control.Monad.Free.Trans
 import Prelude
 
 import Data.Either (Either(..), either)
-import Data.Bifunctor (bimap)
 
-import Control.Bind ((<=<))
 import Control.Monad.Rec.Class (MonadRec, tailRecM)
 import Control.Monad.Trans (MonadTrans)
 
@@ -46,6 +44,15 @@ suspTBind (SuspT m) f = SuspT $ do
     go (Suspend thunk) = let x = thunk unit in SuspT $ pure $ Suspend (\_ -> suspTBind x f)
     go (Done a) = f a
 
+bimapSuspT :: forall f g m n a. (Functor f, Functor g, Monad m, Monad n) => (forall b. f b -> g b) -> (forall b. m b -> n b) -> SuspT f m a -> SuspT g n a
+bimapSuspT fg mn (SuspT m) =
+  SuspT $ go <$> (mn m)
+  where
+    go :: StacklessF f m a -> StacklessF g n a
+    go (F fa) = F (fg $ (bimapFreeT fg mn) <$> fa)
+    go (Suspend thunk) = let x2 = thunk unit in Suspend (\_ -> bimapSuspT fg mn x2)
+    go (Done a) = Done a
+
 -- | The free monad transformer for the functor `f`.
 newtype FreeT f m a = FreeT (forall r. (a -> SuspT f m r) -> SuspT f m r)
 
@@ -69,23 +76,6 @@ resume (FreeT c) = (unSuspT $ c done) >>= (tailRecM go)
     go (F fa) = return $ Right $ Right fa
     go (Suspend thunk) = Left <$> (unSuspT $ thunk unit)
     go (Done a) = return $ Right $ Left a
-
--- | Unpack `FreeT`, exposing the first step of the computation.
-{- TODO: resume
-resume :: forall f m a. (Functor f, MonadRec m) => FreeT f m a -> m (Either a (f (FreeT f m a)))
-resume = tailRecM go
-  where
-  go :: FreeT f m a -> m (Either (FreeT f m a) (Either a (f (FreeT f m a))))
-  go (FreeT f) = map Right (f unit)
-  go (Bind e) = runExists (\(Bound m f) ->
-    case m unit of
-      FreeT m -> do
-        e <- m unit
-        case e of
-          Left a -> return (Left (f a))
-          Right fc -> return (Right (Right (map (\h -> h >>= f) fc)))
-      Bind e1 -> runExists (\(Bound m1 f1) -> return (Left (bind (m1 unit) (\z -> f1 z >>= f)))) e1) e
---}
 
 instance functorFreeT :: (Applicative m) => Functor (FreeT f m) where
   map f (FreeT ca) = FreeT (\k -> suspend (\_ -> ca (k <<< f)))
@@ -120,20 +110,17 @@ instance monadRecFreeT :: (Applicative m) => MonadRec (FreeT f m) where
 liftFreeT :: forall f m a. (Functor f, Monad m) => f a -> FreeT f m a
 liftFreeT fa = FreeT (suspTBind (SuspT $ pure $ F (pure <$> fa)))
 
-{-
 -- | Change the underlying `Monad` for a `FreeT` action.
-hoistFreeT :: forall f m n a. (Functor f, Functor n) => (forall b. m b -> n b) -> FreeT f m a -> FreeT f n a
+hoistFreeT :: forall f m n a. (Functor f, Monad m, Monad n) => (forall b. m b -> n b) -> FreeT f m a -> FreeT f n a
 hoistFreeT = bimapFreeT id
 
 -- | Change the base functor `f` for a `FreeT` action.
-interpret :: forall f g m a. (Functor f, Functor m) => (forall b. f b -> g b) -> FreeT f m a -> FreeT g m a
+interpret :: forall f g m a. (Functor f, Functor g, Monad m) => (forall b. f b -> g b) -> FreeT f m a -> FreeT g m a
 interpret nf = bimapFreeT nf id
 
 -- | Change the base functor `f` and the underlying `Monad` for a `FreeT` action.
-bimapFreeT :: forall f g m n a. (Functor f, Functor n) => (forall b. f b -> g b) -> (forall b. m b -> n b) -> FreeT f m a -> FreeT g n a
-bimapFreeT nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapFreeT nf nm <<< a) (bimapFreeT nf nm <<< f)) e
-bimapFreeT nf nm (FreeT m) = FreeT \_ -> map (nf <<< map (bimapFreeT nf nm)) <$> nm (m unit)
--}
+bimapFreeT :: forall f g m n a. (Functor f, Functor g, Monad m, Monad n) => (forall b. f b -> g b) -> (forall b. m b -> n b) -> FreeT f m a -> FreeT g n a
+bimapFreeT fg mn (FreeT c) = FreeT (\k -> suspTBind (bimapSuspT fg mn (c done)) k)
 
 -- | Run a `FreeT` computation to completion.
 runFreeT :: forall f m a. (MonadRec m) => (f (FreeT f m a) -> m (FreeT f m a)) -> FreeT f m a -> m a
