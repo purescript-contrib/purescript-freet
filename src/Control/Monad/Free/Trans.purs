@@ -2,8 +2,8 @@
 
 module Control.Monad.Free.Trans
   ( FreeT()
-  -- , freeT
-  -- , liftFreeT
+  , freeT
+  , liftFreeT
   -- , hoistFreeT
   -- , interpret
   -- , bimapFreeT
@@ -13,7 +13,7 @@ module Control.Monad.Free.Trans
 
 import Prelude
 
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Bifunctor (bimap)
 
 import Control.Bind ((<=<))
@@ -53,10 +53,14 @@ unFreeT :: forall f m a. FreeT f m a -> (forall r. (a -> SuspT f m r) -> SuspT f
 unFreeT (FreeT a) = a
 
 -- | Construct a computation of type `FreeT`.
-{- TODO: freeT
---freeT :: forall f m a. (Unit -> m (Either a (f (FreeT f m a)))) -> FreeT f m a
---freeT = FreeT
--}
+freeT :: forall f m a. (Functor f, Monad m) => (Unit -> m (Either a (f (FreeT f m a)))) -> FreeT f m a
+freeT thunk = FreeT (\k -> SuspT $ do
+    x <- thunk unit
+    unSuspT $ either
+      k
+      (\fa -> suspTBind (SuspT $ pure $ F fa) k)
+      x
+  )
 
 -- | Unpack `FreeT`, exposing the first step of the computation.
 {- TODO: resume
