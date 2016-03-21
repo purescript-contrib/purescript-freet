@@ -36,6 +36,16 @@ suspend thunk = SuspT $ return $ Suspend thunk
 done :: forall f m a. (Applicative m) => a -> SuspT f m a
 done a = SuspT $ Done <$> pure a
 
+suspTBind :: forall f m a b. (Functor f, Monad m) => SuspT f m a -> (a -> SuspT f m b) -> SuspT f m b
+suspTBind (SuspT m) f = SuspT $ do
+  x <- m
+  unSuspT $ go x
+  where
+    go :: StacklessF f m a -> SuspT f m b
+    go (F fa) = SuspT $ pure $ F ((\(FreeT c) -> FreeT (\k -> (c (\a -> suspTBind (f a) k)))) <$> fa)
+    go (Suspend thunk) = let x = thunk unit in SuspT $ pure $ Suspend (\_ -> suspTBind x f)
+    go (Done a) = f a
+
 -- | The free monad transformer for the functor `f`.
 newtype FreeT f m a = FreeT (forall r. (a -> SuspT f m r) -> SuspT f m r)
 
@@ -94,11 +104,11 @@ instance monadRecFreeT :: (Applicative m) => MonadRec (FreeT f m) where
         Left s1 -> go s1
         Right a -> return a
 
-{-
 -- | Lift an action from the functor `f` to a `FreeT` action.
 liftFreeT :: forall f m a. (Functor f, Monad m) => f a -> FreeT f m a
-liftFreeT fa = FreeT \_ -> return (Right (map pure fa))
+liftFreeT fa = FreeT (suspTBind (SuspT $ pure $ F (pure <$> fa)))
 
+{-
 -- | Change the underlying `Monad` for a `FreeT` action.
 hoistFreeT :: forall f m n a. (Functor f, Functor n) => (forall b. m b -> n b) -> FreeT f m a -> FreeT f n a
 hoistFreeT = bimapFreeT id
