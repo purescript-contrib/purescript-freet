@@ -4,11 +4,9 @@ module Control.Monad.Free.Trans
   ( FreeT()
   , freeT
   , liftFreeT
-  {-
   , hoistFreeT
   , interpret
   , bimapFreeT
-  -}
   , resume
   , runFreeT
   ) where
@@ -112,7 +110,6 @@ resume = tailRecM go
 liftFreeT :: forall f m a. f a -> FreeT f m a
 liftFreeT = liftF_
 
-{-
 -- | Change the underlying `Monad` for a `FreeT` action.
 hoistFreeT :: forall f m n a. (Functor f, Monad m, Monad n) => (forall b. m b -> n b) -> FreeT f m a -> FreeT f n a
 hoistFreeT = bimapFreeT id
@@ -123,8 +120,13 @@ interpret nf = bimapFreeT nf id
 
 -- | Change the base functor `f` and the underlying `Monad` for a `FreeT` action.
 bimapFreeT :: forall f g m n a. (Functor f, Functor g, Monad m, Monad n) => (forall b. f b -> g b) -> (forall b. m b -> n b) -> FreeT f m a -> FreeT g n a
-bimapFreeT fg mn (FreeT c) = FreeT (\k -> suspTBind (bimapSuspT fg mn (c done)) k)
--}
+bimapFreeT fg mn (FreeT m) = m {
+  done: done_,
+  liftM: (\m -> liftM_ $ mn m),
+  liftF: (\f -> liftF_ $ fg f),
+  suspend: (\thunk -> suspend_ (\_ -> bimapFreeT fg mn (thunk unit))),
+  bind: (\m2 f -> bind_ (bimapFreeT fg mn m2) ((bimapFreeT fg mn) <<< f))
+}
 
 -- | Run a `FreeT` computation to completion.
 runFreeT :: forall f m a. (Functor f, MonadRec m) => (f (FreeT f m a) -> m (FreeT f m a)) -> FreeT f m a -> m a
