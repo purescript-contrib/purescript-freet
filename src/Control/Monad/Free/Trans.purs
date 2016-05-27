@@ -113,7 +113,7 @@ bimapFreeT :: forall f g m n a. (Functor f, Functor n) => (forall b. f b -> g b)
 bimapFreeT _ _ (Done a) = Done a
 bimapFreeT _ nm (LiftM m) = LiftM $ nm m
 bimapFreeT nf _ (LiftF f) = LiftF $ nf f
-bimapFreeT nf nm (Suspend thunk) = bimapFreeT nf nm (thunk unit)
+bimapFreeT nf nm (Suspend thunk) = Suspend (\_ -> bimapFreeT nf nm (thunk unit))
 bimapFreeT nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapFreeT nf nm a) (bimapFreeT nf nm <<< f)) e
 
 -- | Run a `FreeT` computation to completion.
