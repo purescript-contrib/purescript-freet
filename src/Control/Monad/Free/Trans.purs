@@ -18,8 +18,8 @@ import Data.Either (Either(..))
 import Data.Bifunctor (bimap)
 
 import Control.Bind ((<=<))
-import Control.Monad.Rec.Class (MonadRec, tailRecM)
-import Control.Monad.Trans (MonadTrans)
+import Control.Monad.Rec.Class (class MonadRec, tailRecM)
+import Control.Monad.Trans (class MonadTrans)
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
 -- | evaluate later.
@@ -42,14 +42,14 @@ resume = tailRecM go
   where
   go :: FreeT f m a -> m (Either (FreeT f m a) (Either a (f (FreeT f m a))))
   go (FreeT f) = map Right (f unit)
-  go (Bind e) = runExists (\(Bound m f) ->
-    case m unit of
+  go (Bind e) = runExists (\(Bound bound f) ->
+    case bound unit of
       FreeT m -> do
         e <- m unit
         case e of
-          Left a -> return (Left (f a))
-          Right fc -> return (Right (Right (map (\h -> h >>= f) fc)))
-      Bind e1 -> runExists (\(Bound m1 f1) -> return (Left (bind (m1 unit) (\z -> f1 z >>= f)))) e1) e
+          Left a -> pure (Left (f a))
+          Right fc -> pure (Right (Right (map (\h -> h >>= f) fc)))
+      Bind e1 -> runExists (\(Bound m1 f1) -> pure (Left (bind (m1 unit) (\z -> f1 z >>= f)))) e1) e
 
 instance functorFreeT :: (Functor f, Functor m) => Functor (FreeT f m) where
   map f (FreeT m) = FreeT \_ -> map (bimap f (map (map f))) (m unit)
@@ -77,11 +77,11 @@ instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m) where
       e <- f s
       case e of
         Left s1 -> go s1
-        Right a -> return a
+        Right a -> pure a
 
 -- | Lift an action from the functor `f` to a `FreeT` action.
 liftFreeT :: forall f m a. (Functor f, Monad m) => f a -> FreeT f m a
-liftFreeT fa = FreeT \_ -> return (Right (map pure fa))
+liftFreeT fa = FreeT \_ -> pure (Right (map pure fa))
 
 -- | Change the underlying `Monad` for a `FreeT` action.
 hoistFreeT :: forall f m n a. (Functor f, Functor n) => (forall b. m b -> n b) -> FreeT f m a -> FreeT f n a
@@ -101,7 +101,7 @@ runFreeT :: forall f m a. (Functor f, MonadRec m) => (f (FreeT f m a) -> m (Free
 runFreeT interp = tailRecM (go <=< resume)
   where
   go :: Either a (f (FreeT f m a)) -> m (Either (FreeT f m a) a)
-  go (Left a) = return (Right a)
+  go (Left a) = pure (Right a)
   go (Right fc) = do
     c <- interp fc
-    return (Left c)
+    pure (Left c)

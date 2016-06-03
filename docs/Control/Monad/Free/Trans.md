@@ -12,13 +12,13 @@ The free monad transformer for the functor `f`.
 
 ##### Instances
 ``` purescript
-instance functorFreeT :: (Functor f, Functor m) => Functor (FreeT f m)
-instance applyFreeT :: (Functor f, Monad m) => Apply (FreeT f m)
-instance applicativeFreeT :: (Functor f, Monad m) => Applicative (FreeT f m)
-instance bindFreeT :: (Functor f, Monad m) => Bind (FreeT f m)
-instance monadFreeT :: (Functor f, Monad m) => Monad (FreeT f m)
-instance monadTransFreeT :: (Functor f) => MonadTrans (FreeT f)
-instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m)
+(Functor f, Functor m) => Functor (FreeT f m)
+(Functor f, Monad m) => Apply (FreeT f m)
+(Functor f, Monad m) => Applicative (FreeT f m)
+(Functor f, Monad m) => Bind (FreeT f m)
+(Functor f, Monad m) => Monad (FreeT f m)
+(Functor f) => MonadTrans (FreeT f)
+(Functor f, Monad m) => MonadRec (FreeT f m)
 ```
 
 #### `freeT`
@@ -48,7 +48,7 @@ Lift an action from the functor `f` to a `FreeT` action.
 #### `hoistFreeT`
 
 ``` purescript
-hoistFreeT :: forall f m n a. (Functor f, Functor n) => (forall a. m a -> n a) -> FreeT f m a -> FreeT f n a
+hoistFreeT :: forall f m n a. (Functor f, Functor n) => (forall b. m b -> n b) -> FreeT f m a -> FreeT f n a
 ```
 
 Change the underlying `Monad` for a `FreeT` action.
@@ -56,7 +56,7 @@ Change the underlying `Monad` for a `FreeT` action.
 #### `interpret`
 
 ``` purescript
-interpret :: forall f g m a. (Functor f, Functor m) => (forall a. f a -> g a) -> FreeT f m a -> FreeT g m a
+interpret :: forall f g m a. (Functor f, Functor m) => (forall b. f b -> g b) -> FreeT f m a -> FreeT g m a
 ```
 
 Change the base functor `f` for a `FreeT` action.
@@ -64,7 +64,7 @@ Change the base functor `f` for a `FreeT` action.
 #### `bimapFreeT`
 
 ``` purescript
-bimapFreeT :: forall f g m n a. (Functor f, Functor n) => (forall a. f a -> g a) -> (forall a. m a -> n a) -> FreeT f m a -> FreeT g n a
+bimapFreeT :: forall f g m n a. (Functor f, Functor n) => (forall b. f b -> g b) -> (forall b. m b -> n b) -> FreeT f m a -> FreeT g n a
 ```
 
 Change the base functor `f` and the underlying `Monad` for a `FreeT` action.
