@@ -1,13 +1,13 @@
 {
   "name": "purescript-freet",
-  "moduleType": [
-    "node"
-  ],
   "ignore": [
     "**/.*",
-    "node_modules",
     "bower_components",
-    "output"
+    "node_modules",
+    "output",
+    "test",
+    "bower.json",
+    "package.json"
   ],
   "license": "MIT",
   "repository": {
@@ -15,10 +15,10 @@
     "url": "git://github.com/paf31/purescript-freet.git"
   },
   "dependencies": {
-    "purescript-console": "^1.0.0-rc.1",
-    "purescript-control": "^1.0.0-rc.1",
-    "purescript-tailrec": "^1.0.0-rc.1",
-    "purescript-transformers": "^1.0.0-rc.1",
-    "purescript-exists": "^1.0.0-rc.1"
+    "purescript-console": "^2.0.0",
+    "purescript-control": "^2.0.0",
+    "purescript-tailrec": "^2.0.0",
+    "purescript-transformers": "^2.0.1",
+    "purescript-exists": "^2.0.0"
   }
 }
