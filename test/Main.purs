@@ -2,13 +2,12 @@ module Test.Main where
 
 import Prelude
 
-import Control.Apply
-import Control.Monad.Eff
-import Control.Monad.Eff.Class
-import Control.Monad.Eff.Console
-import Control.Monad.Trans
-import Control.Monad.Free.Trans
-import Control.Monad.Rec.Class
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Eff.Console (CONSOLE, log)
+import Control.Monad.Free.Trans (FreeT, runFreeT, liftFreeT)
+import Control.Monad.Rec.Class (forever)
+import Control.Monad.Trans.Class (lift)
 
 data TeletypeF a
   = WriteLine String a
@@ -23,7 +22,7 @@ type Teletype = FreeT TeletypeF
 writeLine :: forall m. Monad m => String -> FreeT TeletypeF m Unit
 writeLine s = liftFreeT (WriteLine s unit)
 
-readLine :: forall m. Monad m =>  FreeT TeletypeF m String
+readLine :: forall m. Monad m => FreeT TeletypeF m String
 readLine = liftFreeT (ReadLine id)
 
 mockTeletype :: forall a eff. Teletype (Eff (console :: CONSOLE | eff)) a -> Eff (console :: CONSOLE | eff) a
@@ -35,6 +34,7 @@ mockTeletype = runFreeT interp
     interp (ReadLine k) = do
       pure (k "Fake input")
 
+main :: forall eff. Eff (console :: CONSOLE | eff) Unit
 main = mockTeletype $ forever do
   lift $ log "Enter some input:"
   s <- readLine
