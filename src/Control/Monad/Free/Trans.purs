@@ -43,9 +43,8 @@ resume = tailRecM go
   go (FreeT f) = map Done (f unit)
   go (Bind e) = runExists (\(Bound bound f) ->
     case bound unit of
-      FreeT m -> do
-        e <- m unit
-        case e of
+      FreeT m ->
+        m unit >>= case _ of
           Left a -> pure (Loop (f a))
           Right fc -> pure (Done (Right (map (\h -> h >>= f) fc)))
       Bind e1 -> runExists (\(Bound m1 f1) -> pure (Loop (bind (m1 unit) (\z -> f1 z >>= f)))) e1) e
