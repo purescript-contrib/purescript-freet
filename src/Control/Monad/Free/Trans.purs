@@ -17,8 +17,9 @@ import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.Exists (Exists, mkExists, runExists)
 
+import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
-import Control.Monad.Trans.Class (class MonadTrans)
+import Control.Monad.Trans.Class (class MonadTrans, lift)
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
 -- | evaluate later.
@@ -75,6 +76,9 @@ instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m) where
       f s >>= case _ of
         Loop s1 -> go s1
         Done a -> pure a
+
+instance monadEffFreeT :: (Functor f, MonadEff m) => MonadEff (FreeT f m) where
+  liftEff x = lift (liftEff x)
 
 -- | Lift an action from the functor `f` to a `FreeT` action.
 liftFreeT :: forall f m a. (Functor f, Monad m) => f a -> FreeT f m a
