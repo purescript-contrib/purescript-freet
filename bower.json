@@ -19,6 +19,7 @@
     "purescript-control": "^2.0.0",
     "purescript-tailrec": "^2.0.0",
     "purescript-transformers": "^2.0.1",
-    "purescript-exists": "^2.0.0"
+    "purescript-exists": "^2.0.0",
+    "purescript-eff": "^2.0.0"
   }
 }

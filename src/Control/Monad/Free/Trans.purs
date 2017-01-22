@@ -16,6 +16,8 @@ import Prelude
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.Exists (Exists, mkExists, runExists)
+import Data.Semigroup (class Semigroup, (<>))
+import Data.Monoid (class Monoid, mempty)
 
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
@@ -77,8 +79,17 @@ instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m) where
         Loop s1 -> go s1
         Done a -> pure a
 
-instance monadEffFreeT :: (Functor f, MonadEff m) => MonadEff (FreeT f m) where
-  liftEff x = lift (liftEff x)
+instance semigroupFreeT :: (Functor f, Monad m, Monoid w) => Semigroup (FreeT f m w) where
+  append x y = do
+    x' <- x
+    y' <- y
+    pure (x' <> y')
+
+instance monoidFreeT :: (Functor f, Monad m, Monoid w) => Monoid (FreeT f m w) where
+  mempty = pure mempty
+
+-- instance monadEffFreeT :: (Functor f, MonadEff m) => MonadEff (FreeT f m) where
+--   liftEff x = lift (liftEff x)
 
 -- | Lift an action from the functor `f` to a `FreeT` action.
 liftFreeT :: forall f m a. (Functor f, Monad m) => f a -> FreeT f m a
