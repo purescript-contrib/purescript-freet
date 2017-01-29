@@ -79,7 +79,7 @@ instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m) where
         Loop s1 -> go s1
         Done a -> pure a
 
-instance semigroupFreeT :: (Functor f, Monad m, Monoid w) => Semigroup (FreeT f m w) where
+instance semigroupFreeT :: (Functor f, Monad m, Semigroup w) => Semigroup (FreeT f m w) where
   append = lift2 append
 
 instance monoidFreeT :: (Functor f, Monad m, Monoid w) => Monoid (FreeT f m w) where
