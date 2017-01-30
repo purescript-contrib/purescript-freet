@@ -16,7 +16,6 @@ import Prelude
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.Exists (Exists, mkExists, runExists)
-import Data.Semigroup (class Semigroup, append)
 import Data.Monoid (class Monoid, mempty)
 
 import Control.Apply (lift2)
