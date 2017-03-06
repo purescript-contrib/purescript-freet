@@ -21,6 +21,7 @@ import Data.Monoid (class Monoid, mempty)
 import Control.Apply (lift2)
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
 import Control.Monad.Trans.Class (class MonadTrans)
+import Control.Monad.Eff.Class (class MonadEff, liftEff)
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
 -- | evaluate later.
@@ -77,6 +78,9 @@ instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m) where
       f s >>= case _ of
         Loop s1 -> go s1
         Done a -> pure a
+
+instance monadEffFreeT :: (Functor f, MonadEff eff m) => MonadEff eff (FreeT f m) where
+  liftEff x = FreeT \_ -> map Left (liftEff x)
 
 instance semigroupFreeT :: (Functor f, Monad m, Semigroup w) => Semigroup (FreeT f m w) where
   append = lift2 append
