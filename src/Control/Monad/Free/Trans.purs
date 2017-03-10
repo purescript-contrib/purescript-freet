@@ -117,6 +117,14 @@ instance monadWriterFreeT :: (Functor f, MonadWriter w m) => MonadWriter w (Free
 instance monadStateFreeT :: (Functor f, MonadState s m) => MonadState s (FreeT f m) where
   state f = FreeT \_ -> Left <$> state f
 
+-- FIXME difficult
+-- instance monadErrorFreeT :: (Functor f, MonadError e m) => MonadError e (FreeT f m) where
+--   catchError (Bind e) f = runExists (\(Bound a k) -> bound a (flip catchError f <<< k)) e
+--   catchError (FreeT g) f = FreeT \_ -> do
+--     eXY <- g unit
+--     case eXY of
+--       Left a -> 
+
 
 instance semigroupFreeT :: (Functor f, Monad m, Semigroup w) => Semigroup (FreeT f m w) where
   append = lift2 append
