@@ -114,6 +114,9 @@ instance monadWriterFreeT :: (Functor f, MonadWriter w m) => MonadWriter w (Free
       Left a  -> Left <$> listen (pure a)
       Right x -> pure (Right (listen <$> x))
 
+instance monadStateFreeT :: (Functor f, MonadState s m) => MonadState s (FreeT f m) where
+  state f = FreeT \_ -> Left <$> state f
+
 
 instance semigroupFreeT :: (Functor f, Monad m, Semigroup w) => Semigroup (FreeT f m w) where
   append = lift2 append
