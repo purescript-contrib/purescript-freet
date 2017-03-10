@@ -20,8 +20,14 @@ import Data.Monoid (class Monoid, mempty)
 
 import Control.Apply (lift2)
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
-import Control.Monad.Trans.Class (class MonadTrans)
+import Control.Monad.Trans.Class (class MonadTrans, lift)
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
+import Control.Monad.Reader.Class (class MonadAsk, ask, class MonadReader, local)
+import Control.Monad.Writer.Class (class MonadTell, tell, class MonadWriter, pass, listen)
+import Control.Monad.State.Class (class MonadState, state)
+import Control.Monad.Error.Class (class MonadError, catchError, throwError)
+import Control.Monad.Cont.Class (class MonadCont, callCC)
+
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
 -- | evaluate later.
@@ -80,7 +86,34 @@ instance monadRecFreeT :: (Functor f, Monad m) => MonadRec (FreeT f m) where
         Done a -> pure a
 
 instance monadEffFreeT :: (Functor f, MonadEff eff m) => MonadEff eff (FreeT f m) where
-  liftEff x = FreeT \_ -> map Left (liftEff x)
+  liftEff x = lift (liftEff x)
+
+instance monadAskFreeT :: (Functor f, MonadAsk r m) => MonadAsk r (FreeT f m) where
+  ask = lift ask
+
+instance monadReaderFreeT :: (Functor f, MonadReader r m) => MonadReader r (FreeT f m) where
+  local f (Bind e) = runExists (\(Bound a k) -> bound a (local f <<< k)) e
+  local f (FreeT g) = FreeT \_ -> local f (g unit)
+
+instance monadTellFreeT :: (Functor f, MonadTell w m) => MonadTell w (FreeT f m) where
+  tell w = lift (tell w)
+
+-- FIXME needs reduction
+instance monadWriterFreeT :: (Functor f, MonadWriter w m) => MonadWriter w (FreeT f m) where
+  pass (Bind e) = runExists (\(Bound a k) -> bound a (pass <<< k)) e
+  pass (FreeT g) = FreeT \_ -> do
+    eXY <- g unit
+    case eXY of
+      Left af  -> Left <$> pass (pure af)
+      Right x  -> pure (Right (pass <$> x))
+
+  listen (Bind e) = runExists (\(Bound a k) -> bound a (listen <<< k)) e
+  listen (FreeT g) = FreeT \_ -> do
+    eXY <- g unit
+    case eXY of
+      Left a  -> Left <$> listen (pure a)
+      Right x -> pure (Right (listen <$> x))
+
 
 instance semigroupFreeT :: (Functor f, Monad m, Semigroup w) => Semigroup (FreeT f m w) where
   append = lift2 append
