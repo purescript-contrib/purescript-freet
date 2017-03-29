@@ -15,10 +15,10 @@
     "url": "git://github.com/paf31/purescript-freet.git"
   },
   "dependencies": {
-    "purescript-console": "^2.0.0",
-    "purescript-control": "^2.0.0",
-    "purescript-tailrec": "^2.0.0",
-    "purescript-transformers": "^2.0.1",
-    "purescript-exists": "^2.0.0"
+    "purescript-console": "^3.0.0",
+    "purescript-control": "^3.0.0",
+    "purescript-tailrec": "^3.0.0",
+    "purescript-transformers": "^3.0.0",
+    "purescript-exists": "^3.0.0"
   }
 }

@@ -38,13 +38,13 @@ freeT :: forall f m a. (Unit -> m (Either a (f (FreeT f m a)))) -> FreeT f m a
 freeT = FreeT
 
 -- | Unpack `FreeT`, exposing the first step of the computation.
-resume :: forall f m a. (Functor f, MonadRec m) => FreeT f m a -> m (Either a (f (FreeT f m a)))
+resume :: forall f m a. Functor f => MonadRec m => FreeT f m a -> m (Either a (f (FreeT f m a)))
 resume = tailRecM go
   where
   go :: FreeT f m a -> m (Step (FreeT f m a) (Either a (f (FreeT f m a))))
   go (FreeT f) = map Done (f unit)
-  go (Bind e) = runExists (\(Bound bound f) ->
-    case bound unit of
+  go (Bind e) = runExists (\(Bound bound' f) ->
+    case bound' unit of
       FreeT m ->
         m unit >>= case _ of
           Left a -> pure (Loop (f a))
@@ -85,24 +85,24 @@ instance monoidFreeT :: (Functor f, Monad m, Monoid w) => Monoid (FreeT f m w) w
   mempty = pure mempty
 
 -- | Lift an action from the functor `f` to a `FreeT` action.
-liftFreeT :: forall f m a. (Functor f, Monad m) => f a -> FreeT f m a
+liftFreeT :: forall f m a. Functor f => Monad m => f a -> FreeT f m a
 liftFreeT fa = FreeT \_ -> pure (Right (map pure fa))
 
 -- | Change the underlying `Monad` for a `FreeT` action.
-hoistFreeT :: forall f m n a. (Functor f, Functor n) => (m ~> n) -> FreeT f m a -> FreeT f n a
+hoistFreeT :: forall f m n a. Functor f => Functor n => (m ~> n) -> FreeT f m a -> FreeT f n a
 hoistFreeT = bimapFreeT id
 
 -- | Change the base functor `f` for a `FreeT` action.
-interpret :: forall f g m a. (Functor f, Functor m) => (f ~> g) -> FreeT f m a -> FreeT g m a
+interpret :: forall f g m a. Functor f => Functor m => (f ~> g) -> FreeT f m a -> FreeT g m a
 interpret nf = bimapFreeT nf id
 
 -- | Change the base functor `f` and the underlying `Monad` for a `FreeT` action.
-bimapFreeT :: forall f g m n a. (Functor f, Functor n) => (f ~> g) -> (m ~> n) -> FreeT f m a -> FreeT g n a
+bimapFreeT :: forall f g m n a. Functor f => Functor n => (f ~> g) -> (m ~> n) -> FreeT f m a -> FreeT g n a
 bimapFreeT nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapFreeT nf nm <<< a) (bimapFreeT nf nm <<< f)) e
 bimapFreeT nf nm (FreeT m) = FreeT \_ -> map (nf <<< map (bimapFreeT nf nm)) <$> nm (m unit)
 
 -- | Run a `FreeT` computation to completion.
-runFreeT :: forall f m a. (Functor f, MonadRec m) => (f (FreeT f m a) -> m (FreeT f m a)) -> FreeT f m a -> m a
+runFreeT :: forall f m a. Functor f => MonadRec m => (f (FreeT f m a) -> m (FreeT f m a)) -> FreeT f m a -> m a
 runFreeT interp = tailRecM (go <=< resume)
   where
   go :: Either a (f (FreeT f m a)) -> m (Step (FreeT f m a) a)
