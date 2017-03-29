@@ -13,14 +13,18 @@ module Control.Monad.Free.Trans
 
 import Prelude
 
+import Control.Apply (lift2)
+import Control.Monad.Eff.Class (class MonadEff, liftEff)
+import Control.Monad.Error.Class (class MonadThrow, throwError)
+import Control.Monad.Reader.Class (class MonadAsk, ask)
+import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
+import Control.Monad.State.Class (class MonadState, state)
+import Control.Monad.Trans.Class (class MonadTrans, lift)
+import Control.Monad.Writer.Class (class MonadTell, tell)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.Exists (Exists, mkExists, runExists)
 import Data.Monoid (class Monoid, mempty)
-
-import Control.Apply (lift2)
-import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
-import Control.Monad.Trans.Class (class MonadTrans)
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
 -- | evaluate later.
@@ -83,6 +87,18 @@ instance semigroupFreeT :: (Functor f, Monad m, Semigroup w) => Semigroup (FreeT
 
 instance monoidFreeT :: (Functor f, Monad m, Monoid w) => Monoid (FreeT f m w) where
   mempty = pure mempty
+
+instance monadEffFreeT :: (Functor f, MonadEff eff m) => MonadEff eff (FreeT f m) where
+  liftEff = lift <<< liftEff
+
+instance monadAskFreeT :: (Functor f, MonadAsk r m) => MonadAsk r (FreeT f m) where
+  ask = lift ask
+
+instance monadTellFreeT :: (Functor f, MonadTell w m) => MonadTell w (FreeT f m) where
+  tell = lift <<< tell
+
+instance monadThrowFreeT :: (Functor f, MonadThrow e m) => MonadThrow e (FreeT f m) where
+  throwError = lift <<< throwError
 
 -- | Lift an action from the functor `f` to a `FreeT` action.
 liftFreeT :: forall f m a. Functor f => Monad m => f a -> FreeT f m a
