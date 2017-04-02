@@ -97,6 +97,9 @@ instance monadAskFreeT :: (Functor f, MonadAsk r m) => MonadAsk r (FreeT f m) wh
 instance monadTellFreeT :: (Functor f, MonadTell w m) => MonadTell w (FreeT f m) where
   tell = lift <<< tell
 
+instance monadStateFreeT :: (Functor f, MonadState s m) => MonadState s (FreeT f m) where
+  state = lift <<< state
+
 instance monadThrowFreeT :: (Functor f, MonadThrow e m) => MonadThrow e (FreeT f m) where
   throwError = lift <<< throwError
 
