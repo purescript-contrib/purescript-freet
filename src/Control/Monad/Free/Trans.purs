@@ -14,7 +14,6 @@ module Control.Monad.Free.Trans
 import Prelude
 
 import Control.Apply (lift2)
-import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Error.Class (class MonadThrow, throwError)
 import Control.Monad.Reader.Class (class MonadAsk, ask)
 import Control.Monad.Rec.Class (class MonadRec, Step(..), tailRecM)
@@ -25,6 +24,7 @@ import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.Exists (Exists, mkExists, runExists)
 import Data.Monoid (class Monoid, mempty)
+import Effect.Class (class MonadEffect, liftEffect)
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
 -- | evaluate later.
@@ -88,8 +88,8 @@ instance semigroupFreeT :: (Functor f, Monad m, Semigroup w) => Semigroup (FreeT
 instance monoidFreeT :: (Functor f, Monad m, Monoid w) => Monoid (FreeT f m w) where
   mempty = pure mempty
 
-instance monadEffFreeT :: (Functor f, MonadEff eff m) => MonadEff eff (FreeT f m) where
-  liftEff = lift <<< liftEff
+instance monadEffectFreeT :: (Functor f, MonadEffect m) => MonadEffect (FreeT f m) where
+  liftEffect = lift <<< liftEffect
 
 instance monadAskFreeT :: (Functor f, MonadAsk r m) => MonadAsk r (FreeT f m) where
   ask = lift ask
@@ -109,11 +109,11 @@ liftFreeT fa = FreeT \_ -> pure (Right (map pure fa))
 
 -- | Change the underlying `Monad` for a `FreeT` action.
 hoistFreeT :: forall f m n a. Functor f => Functor n => (m ~> n) -> FreeT f m a -> FreeT f n a
-hoistFreeT = bimapFreeT id
+hoistFreeT = bimapFreeT identity
 
 -- | Change the base functor `f` for a `FreeT` action.
 interpret :: forall f g m a. Functor f => Functor m => (f ~> g) -> FreeT f m a -> FreeT g m a
-interpret nf = bimapFreeT nf id
+interpret nf = bimapFreeT nf identity
 
 -- | Change the base functor `f` and the underlying `Monad` for a `FreeT` action.
 bimapFreeT :: forall f g m n a. Functor f => Functor n => (f ~> g) -> (m ~> n) -> FreeT f m a -> FreeT g n a

@@ -2,9 +2,9 @@ module Test.Main where
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Console (log)
 import Control.Monad.Free.Trans (FreeT, runFreeT, liftFreeT)
 import Control.Monad.Rec.Class (forever)
 import Control.Monad.Trans.Class (lift)
@@ -23,18 +23,18 @@ writeLine :: forall m. Monad m => String -> FreeT TeletypeF m Unit
 writeLine s = liftFreeT (WriteLine s unit)
 
 readLine :: forall m. Monad m => FreeT TeletypeF m String
-readLine = liftFreeT (ReadLine id)
+readLine = liftFreeT (ReadLine identity)
 
-mockTeletype :: forall a eff. Teletype (Eff (console :: CONSOLE | eff)) a -> Eff (console :: CONSOLE | eff) a
+mockTeletype :: forall a. Teletype Effect a -> Effect a
 mockTeletype = runFreeT interp
   where
     interp (WriteLine s next) = do
-      liftEff (log s)
+      liftEffect (log s)
       pure next
     interp (ReadLine k) = do
       pure (k "Fake input")
 
-main :: forall eff. Eff (console :: CONSOLE | eff) Unit
+main :: Effect Unit
 main = mockTeletype $ forever do
   lift $ log "Enter some input:"
   s <- readLine

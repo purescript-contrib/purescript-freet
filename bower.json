@@ -12,16 +12,16 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/paf31/purescript-freet.git"
+    "url": "git://github.com/purescript-contrib/purescript-freet.git"
   },
   "dependencies": {
-    "purescript-control": "^3.0.0",
-    "purescript-tailrec": "^3.0.0",
-    "purescript-transformers": "^3.0.0",
-    "purescript-exists": "^3.0.0",
-    "purescript-eff": "^3.0.0"
+    "purescript-control": "#compiler/0.12",
+    "purescript-tailrec": "#compiler/0.12",
+    "purescript-transformers": "#compiler/0.12",
+    "purescript-exists": "#compiler/0.12",
+    "purescript-effect": "#compiler/0.12"
   },
   "devDependencies": {
-    "purescript-console": "^3.0.0"
+    "purescript-console": "#compiler/0.12"
   }
 }
