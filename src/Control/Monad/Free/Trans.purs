@@ -23,7 +23,6 @@ import Control.Monad.Writer.Class (class MonadTell, tell)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.Exists (Exists, mkExists, runExists)
-import Data.Monoid (class Monoid, mempty)
 import Effect.Class (class MonadEffect, liftEffect)
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
