@@ -7,6 +7,7 @@ module Control.Monad.Free.Trans
   , hoistFreeT
   , interpret
   , bimapFreeT
+  , substFreeT
   , resume
   , runFreeT
   ) where
