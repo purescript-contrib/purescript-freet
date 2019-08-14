@@ -119,6 +119,16 @@ bimapFreeT :: forall f g m n a. Functor f => Functor n => (f ~> g) -> (m ~> n) -
 bimapFreeT nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapFreeT nf nm <<< a) (bimapFreeT nf nm <<< f)) e
 bimapFreeT nf nm (FreeT m) = FreeT \_ -> map (nf <<< map (bimapFreeT nf nm)) <$> nm (m unit)
 
+
+-- | Like `runFreeT`, but for running into some other FreeT without the
+-- | overhead that `MonadRec` incurs.
+substFreeT :: forall a m f g. Monad m => Functor g => (f ~> FreeT g m) -> FreeT f m a -> FreeT g m a
+substFreeT fBind (Bind e) = runExists (\(Bound a f) -> bound (substFreeT fBind <<< a) (substFreeT fBind <<< f)) e
+substFreeT fBind (FreeT m) = join $ FreeT \_ -> m unit <#> case _ of
+  Left val -> Left $ pure val
+  Right fFree -> Left $ bound (\_ -> fBind fFree) (substFreeT fBind)
+
+
 -- | Run a `FreeT` computation to completion.
 runFreeT :: forall f m a. Functor f => MonadRec m => (f (FreeT f m a) -> m (FreeT f m a)) -> FreeT f m a -> m a
 runFreeT interp = tailRecM (go <=< resume)
