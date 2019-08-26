@@ -24,6 +24,7 @@ import Control.Monad.Writer.Class (class MonadTell, tell)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.Exists (Exists, mkExists, runExists)
+import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 
 -- | Instead of implementing `bind` directly, we capture the bind using this data structure, to
@@ -90,6 +91,9 @@ instance monoidFreeT :: (Functor f, Monad m, Monoid w) => Monoid (FreeT f m w) w
 
 instance monadEffectFreeT :: (Functor f, MonadEffect m) => MonadEffect (FreeT f m) where
   liftEffect = lift <<< liftEffect
+
+instance monadAffFreeT :: (Functor f, MonadAff m) => MonadAff (FreeT f m) where
+  liftAff = lift <<< liftAff
 
 instance monadAskFreeT :: (Functor f, MonadAsk r m) => MonadAsk r (FreeT f m) where
   ask = lift ask
