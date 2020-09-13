@@ -36,7 +36,9 @@ bound :: forall f m a b. (Unit -> FreeT f m a) -> (a -> FreeT f m b) -> FreeT f 
 bound m f = Bind (mkExists (Bound m f))
 
 -- | The free monad transformer for the functor `f`.
-data FreeT f m a = FreeT (Unit -> m (Either a (f (FreeT f m a)))) | Bind (Exists (Bound f m a))
+data FreeT f m a
+  = FreeT (Unit -> m (Either a (f (FreeT f m a))))
+  | Bind (Exists (Bound f m a))
 
 -- | Construct a computation of type `FreeT`.
 freeT :: forall f m a. (Unit -> m (Either a (f (FreeT f m a)))) -> FreeT f m a
