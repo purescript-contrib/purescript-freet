@@ -9,7 +9,7 @@ Free monad transformers.
 
 ## Installation
 
-Install `purescript-freet` with [Spago](https://github.com/purescript/spago):
+Install `freet` with [Spago](https://github.com/purescript/spago):
 
 ```sh
 spago install freet
@@ -34,7 +34,7 @@ If you get stuck, there are several ways to get help:
 
 ## Contributing
 
-You can contribute to `purescript-freet` in several ways:
+You can contribute to `freet` in several ways:
 
 1. If you encounter a problem or have a question, please [open an issue](https://github.com/purescript-contrib/purescript-freet/issues). We'll do our best to work with you to resolve or answer it.
 
