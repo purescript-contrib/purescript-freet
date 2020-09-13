@@ -21,7 +21,7 @@ The quick start hasn't been written yet (contributions are welcome!). The quick 
 
 ## Documentation
 
-purescript-freet documentation is stored in a few places:
+`freet` documentation is stored in a few places:
 
 1. Module documentation is [published on Pursuit](https://pursuit.purescript.org/packages/purescript-freet).
 2. Written documentation and [the changelog](./docs/CHANGELOG.md) are kept in [the docs directory](./docs).
