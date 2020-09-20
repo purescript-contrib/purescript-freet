@@ -9,6 +9,7 @@
   , "prelude"
   , "psci-support"
   , "tailrec"
+  , "tuples"
   , "transformers"
   ]
 , packages = ./packages.dhall
