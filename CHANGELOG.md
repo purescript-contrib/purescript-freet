@@ -7,6 +7,7 @@ Notable changes to this project are documented in this file. The format is based
 Breaking changes (😱!!!):
 
 New features:
+- added the `CofreeT`, the cofree monad transformer in a new module (`Control.Monad.Cofree.Trans`)
 
 Bugfixes:
 
