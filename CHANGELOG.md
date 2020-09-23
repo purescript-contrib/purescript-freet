@@ -71,4 +71,3 @@ Add repository info for Pursuit.
 ## [v0.1.0](https://github.com/purescript-contrib/purescript-freet/releases/tag/v0.1.0) - 2015-08-07
 
 Initial versioned release
-
