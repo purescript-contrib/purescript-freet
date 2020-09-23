@@ -6,6 +6,7 @@
   , "effect"
   , "either"
   , "exists"
+  , "free"
   , "prelude"
   , "psci-support"
   , "tailrec"
