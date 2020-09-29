@@ -45,7 +45,6 @@ cofreeT'
     -> CofreeT f m a
 cofreeT' t = CofreeT $ (\_ -> t)
 
-
 -- | Unpack `CofreeT` into the inner computation.
 runCofreeT :: forall f m a. CofreeT f m a -> m (Tuple a (f (CofreeT f m a)))
 runCofreeT (CofreeT f) = f unit
