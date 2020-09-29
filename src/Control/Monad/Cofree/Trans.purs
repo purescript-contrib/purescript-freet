@@ -38,6 +38,7 @@ cofreeT
     -> CofreeT f m a
 cofreeT = CofreeT
 
+-- | Construct a `CofreeT` from a computation with an annotation 'a'.
 cofreeT'
     :: forall f m a
      . m (Tuple a (f (CofreeT f m a)))
@@ -46,18 +47,18 @@ cofreeT' t = CofreeT $ (\_ -> t)
 
 
 -- | Unpack `CofreeT` into the inner computation.
-unCofreeT :: forall f m a. CofreeT f m a -> m (Tuple a (f (CofreeT f m a)))
-unCofreeT (CofreeT f) = f unit
+runCofreeT :: forall f m a. CofreeT f m a -> m (Tuple a (f (CofreeT f m a)))
+runCofreeT (CofreeT f) = f unit
 
 -- | Obtain the annotation stored within a `CofreeT`.
 head :: forall f m a. Functor m => CofreeT f m a -> m a
-head = map T.fst <<< unCofreeT
+head = map T.fst <<< runCofreeT
 
 -- | Obtain the inner computation stored within a `CofreeT`.
 tail :: forall f m a. Functor m => CofreeT f m a -> m (f (CofreeT f m a))
-tail = map T.snd <<< unCofreeT
+tail = map T.snd <<< runCofreeT
 
--- Note: This cannot be automatically derived because 'a' also appers in the
+-- Note: This cannot be automatically derived because 'a' also appears in the
 -- 'fst' position of the inner Tuple.
 instance functorCofreeT :: (Functor m, Functor f) => Functor (CofreeT f m) where
   map f (CofreeT inner) = CofreeT $ map (map (bimap f (map (map f)))) inner
@@ -109,7 +110,6 @@ instance comonadTransCofreeT :: ComonadTrans (CofreeT f) where
 instance comonadAskCofreeT :: (Functor f, ComonadAsk e m) => ComonadAsk e (CofreeT f m) where
   ask = ask <<< tail
 
-
 instance foldableCofreeT :: (Foldable m, Foldable f) => Foldable (CofreeT f m) where
   foldMap f (CofreeT inner) = foldMap go $ inner unit
     where
@@ -136,11 +136,10 @@ instance comonadCofreeT :: (Comonad m, Functor f) => Comonad (CofreeT f m) where
   extract = extract <<< head
 
 instance eqCofreeT :: Eq (m (Tuple a (f (CofreeT f m a)))) => Eq (CofreeT f m a) where
-  eq = eq `on` unCofreeT
+  eq = eq `on` runCofreeT
 
 instance ordCofreeT :: Ord (m (Tuple a (f (CofreeT f m a)))) => Ord (CofreeT f m a) where
-  compare = compare `on` unCofreeT
-
+  compare = compare `on` runCofreeT
 
 -- | 'hoist' the effect type using a natural transform.
 hoistCofreeT :: forall f m n a. Functor f => Functor n => (m ~> n) -> CofreeT f m a -> CofreeT f n a
