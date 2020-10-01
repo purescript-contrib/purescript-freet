@@ -2,7 +2,7 @@ module Test.CofreeTExample where
 
 import Prelude
 
-import Control.Monad.Cofree.Trans (CofreeT, cofreeT, head, tail)
+import Control.Comonad.Cofree.Trans (CofreeT, cofreeT, head, tail)
 import Data.List (List(..), fromFoldable, (:))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..))
