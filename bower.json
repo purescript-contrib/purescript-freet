@@ -12,19 +12,19 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/purescript-contrib/purescript-freet.git"
+    "url": "https://github.com/purescript-contrib/purescript-freet.git"
   },
   "dependencies": {
-    "purescript-bifunctors": "^4.0.0",
-    "purescript-effect": "^2.0.0",
-    "purescript-either": "^4.0.0",
-    "purescript-exists": "^4.0.0",
-    "purescript-prelude": "^4.0.0",
-    "purescript-tailrec": "^4.0.0",
-    "purescript-transformers": "^4.0.0",
-    "purescript-aff": "^5.1.1"
+    "purescript-bifunctors": "master",
+    "purescript-effect": "master",
+    "purescript-either": "master",
+    "purescript-exists": "master",
+    "purescript-prelude": "master",
+    "purescript-tailrec": "master",
+    "purescript-transformers": "master",
+    "purescript-aff": "main"
   },
   "devDependencies": {
-    "purescript-console": "^4.0.0"
+    "purescript-console": "master"
   }
 }
