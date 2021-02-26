@@ -15,16 +15,18 @@
     "url": "https://github.com/purescript-contrib/purescript-freet.git"
   },
   "dependencies": {
-    "purescript-bifunctors": "master",
-    "purescript-effect": "master",
-    "purescript-either": "master",
-    "purescript-exists": "master",
-    "purescript-prelude": "master",
-    "purescript-tailrec": "master",
-    "purescript-transformers": "master",
-    "purescript-aff": "main"
+    "purescript-aff": "^6.0.0",
+    "purescript-bifunctors": "^5.0.0",
+    "purescript-effect": "^3.0.0",
+    "purescript-either": "^5.0.0",
+    "purescript-exists": "^5.0.0",
+    "purescript-free": "^6.0.0",
+    "purescript-prelude": "^5.0.0",
+    "purescript-tailrec": "^5.0.0",
+    "purescript-transformers": "^5.0.0",
+    "purescript-tuples": "^6.0.0"
   },
   "devDependencies": {
-    "purescript-console": "master"
+    "purescript-console": "^5.0.0"
   }
 }
