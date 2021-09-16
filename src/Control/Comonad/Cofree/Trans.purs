@@ -1,8 +1,8 @@
 -- | This module defines a lazy implementation of the _cofree monad transformer_.
 
--- | Given a `CofreeT` f m a:
+-- | Given a `CofreeT` f w a:
 -- | - 'f' is a `Functor`, generally representing an AST,
--- | - 'm' is a 'Monad', generally representing an effect,
+-- | - 'w' is a 'Comonad',
 -- | - and 'a' is the type of the annotation.
 -- |
 -- | Usually, you would use `CofreeT` to annotate an existing AST with
