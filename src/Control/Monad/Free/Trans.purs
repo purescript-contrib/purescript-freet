@@ -59,7 +59,7 @@ resume = tailRecM go
             Right fc -> pure (Done (Right (map (\h -> h >>= f) fc)))
         Bind e1 -> 
           e1 # runExists \(Bound m1 f1) -> 
-            pure (Loop (bind (m1 unit) (\z -> f1 z >>= f))))
+            pure (Loop (bind (m1 unit) (\z -> f1 z >>= f)))
 
 instance functorFreeT :: (Functor f, Functor m) => Functor (FreeT f m) where
   map f (FreeT m) = FreeT \_ -> map (bimap f (map (map f))) (m unit)
