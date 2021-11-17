@@ -50,15 +50,15 @@ resume = tailRecM go
   where
   go :: FreeT f m a -> m (Step (FreeT f m a) (Either a (f (FreeT f m a))))
   go (FreeT f) = map Done (f unit)
-  go (Bind e) = 
+  go (Bind e) =
     e # runExists \(Bound bound' f) ->
       case bound' unit of
         FreeT m ->
           m unit >>= case _ of
             Left a -> pure (Loop (f a))
             Right fc -> pure (Done (Right (map (\h -> h >>= f) fc)))
-        Bind e1 -> 
-          e1 # runExists \(Bound m1 f1) -> 
+        Bind e1 ->
+          e1 # runExists \(Bound m1 f1) ->
             pure (Loop (bind (m1 unit) (\z -> f1 z >>= f)))
 
 instance functorFreeT :: (Functor f, Functor m) => Functor (FreeT f m) where
