@@ -36,7 +36,8 @@ mockTeletype = runFreeT interp
 
 -- Also see purescript-safely
 replicateM_ :: forall m a. MonadRec m => Int -> m a -> m Unit
-replicateM_ n x = tailRecM step n where
+replicateM_ n x = tailRecM step n
+  where
   step :: Int -> m (Step Int Unit)
   step 0 = pure (Done unit)
   step m = x $> Loop (m - 1)

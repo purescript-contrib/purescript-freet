@@ -14,10 +14,10 @@ type IndexedList = CofreeT List Maybe Int
 list :: IndexedList
 list = cofreeT (go 5)
   where
-    go :: Int -> Unit -> Maybe (Tuple Int (List IndexedList))
-    go 0 _ = Just $ Tuple 0 Nil
-    go 5 _ = Just $ Tuple 5 (fromFoldable $ cofreeT <$> (go <$> [4, 3]))
-    go i _ = Just $ Tuple i (pure $ cofreeT (go (i - 1)))
+  go :: Int -> Unit -> Maybe (Tuple Int (List IndexedList))
+  go 0 _ = Just $ Tuple 0 Nil
+  go 5 _ = Just $ Tuple 5 (fromFoldable $ cofreeT <$> (go <$> [ 4, 3 ]))
+  go i _ = Just $ Tuple i (pure $ cofreeT (go (i - 1)))
 
 annotations :: IndexedList -> List (Maybe Int)
 annotations il = head il : join (annotations <$> fromMaybe mempty (tail il))
