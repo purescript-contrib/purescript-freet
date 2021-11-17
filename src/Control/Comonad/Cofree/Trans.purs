@@ -42,7 +42,7 @@ cofreeT'
   :: forall f w a
    . w (Tuple a (f (CofreeT f w a)))
   -> CofreeT f w a
-cofreeT' t = CofreeT $ (\_ -> t)
+cofreeT' t = CofreeT (\_ -> t)
 
 -- | Unpack `CofreeT` into the inner computation.
 runCofreeT :: forall f w a. CofreeT f w a -> w (Tuple a (f (CofreeT f w a)))
@@ -63,9 +63,8 @@ instance functorCofreeT :: (Functor w, Functor f) => Functor (CofreeT f w) where
 
 instance applyCofreeT :: (Apply w, Apply f) => Apply (CofreeT f w) where
   apply (CofreeT innerF) (CofreeT inner) =
-    CofreeT
-      $ \_ ->
-          go <$> innerF unit <*> inner unit
+    CofreeT $ \_ ->
+      go <$> innerF unit <*> inner unit
     where
     go (Tuple f nextF) (Tuple x nextX) =
       Tuple (f x) (lift2 (<*>) nextF nextX)
@@ -75,12 +74,11 @@ instance applicativeCofreeT :: (Applicative w, Apply f, Plus f) => Applicative (
 
 instance bindCofreeT :: (Monad w, Alt f, Apply f) => Bind (CofreeT f w) where
   bind (CofreeT inner) f =
-    CofreeT
-      $ \_ -> do
-          (Tuple a m) <- inner unit
-          let (CofreeT next) = f a
-          (Tuple b n) <- next unit
-          pure $ Tuple b (n <|> map (_ >>= f) m)
+    CofreeT $ \_ -> do
+      (Tuple a m) <- inner unit
+      let (CofreeT next) = f a
+      (Tuple b n) <- next unit
+      pure $ Tuple b (n <|> map (_ >>= f) m)
 
 instance monadCofreeT :: (Monad w, Plus f, Apply f) => Monad (CofreeT f w)
 
