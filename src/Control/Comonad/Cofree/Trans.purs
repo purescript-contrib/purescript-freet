@@ -32,16 +32,16 @@ newtype CofreeT f w a = CofreeT (Unit -> w (Tuple a (f (CofreeT f w a))))
 
 -- | Construct a `CofreeT` from a lazy computation with an annotation 'a'.
 cofreeT
-    :: forall f w a
-     . (Unit -> w (Tuple a (f (CofreeT f w a))))
-    -> CofreeT f w a
+  :: forall f w a
+   . (Unit -> w (Tuple a (f (CofreeT f w a))))
+  -> CofreeT f w a
 cofreeT = CofreeT
 
 -- | Construct a `CofreeT` from a computation with an annotation 'a'.
 cofreeT'
-    :: forall f w a
-     . w (Tuple a (f (CofreeT f w a)))
-    -> CofreeT f w a
+  :: forall f w a
+   . w (Tuple a (f (CofreeT f w a)))
+  -> CofreeT f w a
 cofreeT' t = CofreeT $ (\_ -> t)
 
 -- | Unpack `CofreeT` into the inner computation.
@@ -65,10 +65,10 @@ instance applyCofreeT :: (Apply w, Apply f) => Apply (CofreeT f w) where
   apply (CofreeT innerF) (CofreeT inner) =
     CofreeT
       $ \_ ->
-        go <$> innerF unit <*> inner unit
+          go <$> innerF unit <*> inner unit
     where
-      go (Tuple f nextF) (Tuple x nextX) =
-        Tuple (f x) (lift2 (<*>) nextF nextX)
+    go (Tuple f nextF) (Tuple x nextX) =
+      Tuple (f x) (lift2 (<*>) nextF nextX)
 
 instance applicativeCofreeT :: (Applicative w, Apply f, Plus f) => Applicative (CofreeT f w) where
   pure a = CofreeT $ \_ -> pure (Tuple a empty)
@@ -77,27 +77,27 @@ instance bindCofreeT :: (Monad w, Alt f, Apply f) => Bind (CofreeT f w) where
   bind (CofreeT inner) f =
     CofreeT
       $ \_ -> do
-        (Tuple a m) <- inner unit
-        let (CofreeT next) = f a
-        (Tuple b n) <- next unit
-        pure $ Tuple b (n <|> map (_ >>= f) m)
+          (Tuple a m) <- inner unit
+          let (CofreeT next) = f a
+          (Tuple b n) <- next unit
+          pure $ Tuple b (n <|> map (_ >>= f) m)
 
 instance monadCofreeT :: (Monad w, Plus f, Apply f) => Monad (CofreeT f w)
 
 instance monadTransCofreeT :: Plus f => MonadTrans (CofreeT f) where
   lift = cofreeT' <<< map go
     where
-      go x = Tuple x empty
+    go x = Tuple x empty
 
 instance monadEffectCofreeT :: (MonadEffect w, Plus f, Apply f) => MonadEffect (CofreeT f w) where
   liftEffect eff = cofreeT' $ go <$> liftEffect eff
     where
-      go a = Tuple a empty
+    go a = Tuple a empty
 
 instance monadAffCofreeT :: (MonadAff w, Plus f, Apply f) => MonadAff (CofreeT f w) where
   liftAff aff = cofreeT' $ go <$> liftAff aff
     where
-      go a = Tuple a empty
+    go a = Tuple a empty
 
 instance comonadCofreeCofreeT :: (Comonad w, Functor f) => ComonadCofree f (CofreeT f w) where
   unwrapCofree = extract <<< tail
@@ -111,7 +111,7 @@ instance comonadAskCofreeT :: (Functor f, ComonadAsk e w) => ComonadAsk e (Cofre
 instance foldableCofreeT :: (Foldable w, Foldable f) => Foldable (CofreeT f w) where
   foldMap f (CofreeT inner) = foldMap go $ inner unit
     where
-      go (Tuple a next) = f a <> foldMap (foldMap f) next
+    go (Tuple a next) = f a <> foldMap (foldMap f) next
 
   foldr abb b = foldrDefault abb b
 
@@ -121,14 +121,14 @@ instance traversableCofreeT :: (Traversable w, Traversable f) => Traversable (Co
   traverse f (CofreeT inner) =
     cofreeT' <$> traverse go (inner unit)
     where
-      go (Tuple a next) = Tuple <$> f a <*> traverse (traverse f) next
+    go (Tuple a next) = Tuple <$> f a <*> traverse (traverse f) next
 
   sequence = sequenceDefault
 
 instance extendCofreeT :: (Comonad w, Functor f) => Extend (CofreeT f w) where
   extend f (CofreeT inner) = CofreeT $ \_ -> extend go (inner unit)
     where
-      go w = Tuple (f $ cofreeT' w) $ extend f <$> T.snd (extract w)
+    go w = Tuple (f $ cofreeT' w) $ extend f <$> T.snd (extract w)
 
 instance comonadCofreeT :: (Comonad w, Functor f) => Comonad (CofreeT f w) where
   extract = extract <<< head
@@ -145,5 +145,5 @@ interpretCofreeT nf = bimapCofreeT nf identity
 bimapCofreeT :: forall f g w u a. Functor u => Functor g => (f ~> g) -> (w ~> u) -> CofreeT f w a -> CofreeT g u a
 bimapCofreeT nf nm (CofreeT inner) = CofreeT $ (map (map (map go))) $ map nm inner
   where
-    go :: f (CofreeT f w a) -> g (CofreeT g u a)
-    go = map (bimapCofreeT nf nm) <<< nf
+  go :: f (CofreeT f w a) -> g (CofreeT g u a)
+  go = map (bimapCofreeT nf nm) <<< nf

@@ -50,13 +50,16 @@ resume = tailRecM go
   where
   go :: FreeT f m a -> m (Step (FreeT f m a) (Either a (f (FreeT f m a))))
   go (FreeT f) = map Done (f unit)
-  go (Bind e) = runExists (\(Bound bound' f) ->
-    case bound' unit of
-      FreeT m ->
-        m unit >>= case _ of
-          Left a -> pure (Loop (f a))
-          Right fc -> pure (Done (Right (map (\h -> h >>= f) fc)))
-      Bind e1 -> runExists (\(Bound m1 f1) -> pure (Loop (bind (m1 unit) (\z -> f1 z >>= f)))) e1) e
+  go (Bind e) = runExists
+    ( \(Bound bound' f) ->
+        case bound' unit of
+          FreeT m ->
+            m unit >>= case _ of
+              Left a -> pure (Loop (f a))
+              Right fc -> pure (Done (Right (map (\h -> h >>= f) fc)))
+          Bind e1 -> runExists (\(Bound m1 f1) -> pure (Loop (bind (m1 unit) (\z -> f1 z >>= f)))) e1
+    )
+    e
 
 instance functorFreeT :: (Functor f, Functor m) => Functor (FreeT f m) where
   map f (FreeT m) = FreeT \_ -> map (bimap f (map (map f))) (m unit)
@@ -126,7 +129,6 @@ bimapFreeT :: forall f g m n a. Functor f => Functor n => (f ~> g) -> (m ~> n) -
 bimapFreeT nf nm (Bind e) = runExists (\(Bound a f) -> bound (bimapFreeT nf nm <<< a) (bimapFreeT nf nm <<< f)) e
 bimapFreeT nf nm (FreeT m) = FreeT \_ -> map (nf <<< map (bimapFreeT nf nm)) <$> nm (m unit)
 
-
 -- | Like `runFreeT`, but for running into some other FreeT without the
 -- | overhead that `MonadRec` incurs.
 substFreeT :: forall a m f g. Monad m => Functor g => (f ~> FreeT g m) -> FreeT f m a -> FreeT g m a
@@ -134,7 +136,6 @@ substFreeT fBind (Bind e) = runExists (\(Bound a f) -> bound (substFreeT fBind <
 substFreeT fBind (FreeT m) = join $ FreeT \_ -> m unit <#> case _ of
   Left val -> Left $ pure val
   Right fFree -> Left $ bound (\_ -> fBind fFree) (substFreeT fBind)
-
 
 -- | Run a `FreeT` computation to completion.
 runFreeT :: forall f m a. Functor f => MonadRec m => (f (FreeT f m a) -> m (FreeT f m a)) -> FreeT f m a -> m a
