@@ -3,7 +3,6 @@
 [![CI](https://github.com/purescript-contrib/purescript-freet/workflows/CI/badge.svg?branch=main)](https://github.com/purescript-contrib/purescript-freet/actions?query=workflow%3ACI+branch%3Amain)
 [![Release](http://img.shields.io/github/release/purescript-contrib/purescript-freet.svg)](https://github.com/purescript-contrib/purescript-freet/releases)
 [![Pursuit](http://pursuit.purescript.org/packages/purescript-freet/badge)](http://pursuit.purescript.org/packages/purescript-freet)
-[![Maintainer: thomashoneyman](https://img.shields.io/badge/maintainer-thomashoneyman-teal.svg)](http://github.com/thomashoneyman)
 
 Free monad transformers.
 
