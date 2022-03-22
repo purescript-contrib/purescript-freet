@@ -12,7 +12,6 @@
   , "lists"
   , "maybe"
   , "prelude"
-  , "psci-support"
   , "tailrec"
   , "transformers"
   , "tuples"
